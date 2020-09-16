@@ -1,0 +1,56 @@
+services:
+  proxy:
+    command:
+    - --providers.docker
+    - --providers.docker.constraints=Label(`traefik.constraint-label-stack`, `registry.com`)
+    - --providers.docker.exposedbydefault=false
+    - --providers.docker.swarmmode
+    - --accesslog
+    - --log
+    - --api
+    deploy:
+      labels:
+      - traefik.enable=true
+      - traefik.docker.network=traefik-public
+      - traefik.constraint-label=traefik-public
+      - traefik.http.middlewares.registry-com-https-redirect.redirectscheme.scheme=https
+      - traefik.http.middlewares.registry-com-https-redirect.redirectscheme.permanent=true
+      - traefik.http.routers.registry-com-proxy-http.rule=Host(`registry.tmd.fakhred.in`)
+        || Host(`www.registry.tmd.fakhred.in`)
+      - traefik.http.routers.registry-com-proxy-http.entrypoints=http
+      - traefik.http.routers.registry-com-proxy-https.rule=Host(`registry.tmd.fakhred.in`)
+        || Host(`www.registry.tmd.fakhred.in`)
+      - traefik.http.routers.registry-com-proxy-https.entrypoints=https
+      - traefik.http.routers.registry-com-proxy-https.tls=true
+      - traefik.http.routers.registry-com-proxy-https.tls.certresolver=le
+      - traefik.http.services.registry-com-proxy.loadbalancer.server.port=80
+      - traefik.http.middlewares.registry-com-www-redirect.redirectregex.regex=^https?://(www.)?(registry.tmd.fakhred.in)/(.*)
+      - traefik.http.middlewares.registry-com-www-redirect.redirectregex.replacement=https://registry.tmd.fakhred.in/$${3}
+      - traefik.http.routers.registry-com-proxy-https.middlewares=registry-com-www-redirect
+      - traefik.http.routers.registry-com-proxy-http.middlewares=registry-com-www-redirect,registry-com-https-redirect
+      placement:
+        constraints:
+        - node.role == manager
+    image: traefik:v2.2
+    networks:
+      default: null
+      traefik-public: null
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock:rw
+  registry:
+    deploy:
+      labels:
+      - traefik.enable=true
+      - traefik.constraint-label-stack=registry.com
+      - traefik.http.routers.registry-com-registry-http.rule=PathPrefix(`/`)
+      - traefik.http.services.registry-com-registry.loadbalancer.server.port=5000
+      placement:
+        constraints:
+        - node.role == manager
+    image: registry:2
+    volumes:
+    - registry:/var/lib/registry:rw
+version: '3.3'
+volumes:
+  registry: {}
+
