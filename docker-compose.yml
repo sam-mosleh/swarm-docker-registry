@@ -81,7 +81,7 @@ services:
         - traefik.constraint-label-stack=${TRAEFIK_TAG?Variable not set}
         - traefik.http.routers.${STACK_NAME?Variable not set}-registry-http.rule=PathPrefix(`/`)
         - traefik.http.services.${STACK_NAME?Variable not set}-registry.loadbalancer.server.port=5000
-        - traefik.http.middlewares.${STACK_NAME?Variable not set}-registry-auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
+        - traefik.http.middlewares.registry-auth.basicauth.users=${USERNAME?Variable not set}:${HASHED_PASSWORD?Variable not set}
         - traefik.http.routers.${STACK_NAME?Variable not set}-registry-http.middlewares=registry-auth
 volumes:
   registry-data:
