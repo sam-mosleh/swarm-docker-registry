@@ -70,6 +70,8 @@ services:
 
   registry:
     image: registry:2
+    environment:
+      - REGISTRY_HTTP_RELATIVEURLS=true
     volumes:
       - registry-data:/var/lib/registry
     deploy:
